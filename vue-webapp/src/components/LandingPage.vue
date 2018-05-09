@@ -38,7 +38,7 @@
               <v-card-text>
                 <v-layout column>
                   <v-flex class="text-xs-center">
-                    <v-btn v-on:click="node_info_test" color="purple"
+                    <v-btn v-on:click="on_test" color="purple"
                     flat
                     outline
                     >
@@ -55,7 +55,7 @@
           <v-card style="background-color:#ffffff;opacity:0.9;">
             <v-card-title>
               <v-flex class="text-xs-center" style="margin-top:0px;">
-                <h2> Generate Key </h2>
+                <h2> Generate Public Key </h2>
               </v-flex>
             </v-card-title>
             <v-card-text>
@@ -71,23 +71,36 @@
                       id="passphrase"
                       type="username"
                       :rules="[v => !!v || 'Key is required']"
-                      v-model="passphrase"
+                      v-model="generate_key.passphrase"
                       required></v-text-field>
                   </v-flex>
                   <v-flex class="text-xs-center">
-                    <v-btn v-on:click="generate_rsa" color="purple"
+                    <v-btn v-on:click="generate_public_private" color="purple"
                     flat
                     outline
                     >
                       Generate
                     </v-btn>
                   </v-flex>
+                  <v-flex v-if="generate_key.key != ''"
+                  >
+                    <h3>
+                      Key: 
+                    </h3>
+                  </v-flex>
+                  <v-flex 
+                  class="text-xs-center"
+                  style="overflow: scroll;max-width:300px"
+                  v-if="generate_key.key != ''">
+                    <span>
+                      {{generate_key.key}}
+                    </span>
+                  </v-flex>
                 </v-form>
               </v-layout>
             </v-card-text>
           </v-card>
         </v-flex>
-
       </v-layout>
 
       <v-flex style="margin:10px;">
@@ -177,7 +190,7 @@
                       label="Address"
                       id="address"
                       type="username"
-                      v-model="address"
+                      v-model="count.address"
                       multi-line
                       rows="3"
                       :rules="[v => !!v || 'Key is required',
@@ -187,10 +200,10 @@
                   </v-flex>
                   <v-text-field
                     name="private_key"
-                    label="Decryption Key"
+                    label="Passphrase"
                     id="private_key"
                     type="username"
-                    v-model="private_key"
+                    v-model="count.private_key"
                     multi-line
                     :rules="[v => !!v || 'Decryption key required']"
                     required></v-text-field>
@@ -219,23 +232,28 @@
 
 <script>
   import router from '@/router'
-  import TrueVote from '../mixins/TrueVote.js'
+  import truevote from 'truevote'
+  import cryptico from 'cryptico'
 
-  var cryptico = require('cryptico')
 
   var Bits = 1024; 
 
   export default {
-    mixins: [TrueVote],
     data() {
       return {
         valid: true,
         generate_rsa_valid: true,
         iota_wallet_seed: '',
         poll_key: '',
-        address: '',
-        private_key: '',
-        passphrase: '',
+        count: {
+          address: '',
+          private_key: ''
+        },
+        session_password: '',
+        generate_key: {
+          passphrase: '',
+          key: ''
+        },
         rules: [
           () => 'Username or Password is incorrect'
         ]
@@ -254,14 +272,19 @@
         }
       },
       on_test() {
-        this.node_info_test()
+        truevote.node_info_test((err,success) =>{
+          if (err) {
+            console.error(err);
+          } else {
+            alert(JSON.stringify(success))
+          }
+        })
       },
-      generate_rsa() {
-        if (this.$refs.generate_rsa_form.validate()) {
-          var rsa_key = cryptico.generateRSAKey(this.passphrase, Bits);
-          var public_key = cryptico.publicKeyString(rsa_key);
-          alert('public key: ' + public_key + '\n\n' + 'private_key: ' + str(rsa_key) )
-        }
+      generate_public_private(){
+        var Bits = 1024;
+        var priv_key = cryptico.generateRSAKey(this.generate_key.passphrase, Bits);
+        var pub_key = cryptico.publicKeyString(priv_key);
+        this.generate_key.key = pub_key
       }
     }
   }
@@ -270,7 +293,7 @@
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-  h1, h2 {
+  h1, h2, h3 {
     font-weight: normal;
   }
   ul {

@@ -153,7 +153,7 @@
 </template>
 
 <script>
-  import TrueVote from '../mixins/TrueVote.js'
+  var truevote = require('truevote')
 
   var Chance = require('chance');
 
@@ -161,7 +161,6 @@
   var chance = new Chance();
 
   export default {
-    mixins: [TrueVote],
     data () {
       return {
         poll_id: null,
@@ -197,21 +196,11 @@
         this.vote_definitions.splice(index, 1)
       },
       create_poll(){
-        this.initializePoll(this.dest_account, this.vote_definitions,
+        truevote.initializePoll(this.dest_account, this.vote_definitions,
           this.start_time, this.end_time, this.voter_identifiers,
-          this.poll_operators, this.iota_addr_ind, this.seed,
-          (error, result) => {
-            if (error) {
-
-                console.error("Failed to publish vote template to tangle")
-                reject(error);
-
-            } else {
-
-                console.log("New poll successfully published: ", result);
-                //resolve(self.parseTransaction(result));
-                alert('Poll successfully published!')
-            }
+          this.poll_operators, this.iota_addr_ind, this.seed)
+        .then(() => {
+          this.$emit('_snackbar', 6000, 'Poll Initialized.')
         });
       }
     }
